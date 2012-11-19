@@ -7,36 +7,15 @@
 //==================================================================================================
 
 var net = require("net");
+var http = require("http");
 
 var HOST = "192.168.1.126";
 var PORT = 5001;
+var HTTP_PORT = 5002;
 
 //
-// Location check-in database
+// Method to generate and return a new GUID.
 //
-
-var Location = null;
-var mongoose = require('mongoose');
-var db = mongoose.createConnection('localhost', 'test');
-db.once('open', function() {
-    var LocationSchema = new mongoose.Schema({
-        athleteId: Number, 
-        longitude: Number,
-        latitude: Number,
-        time: Number
-    });
-    Location = db.model('Location', LocationSchema);
-});
-
-//
-// Misc. helper methods
-//
-function jsonReplacer(key, value) {
-    if (key == "_id") return undefined;
-    if (key == "__v") return undefined;
-    return value;
-}
-
 function newGuid() {
     var S4 = function () {
         return Math.floor(
@@ -52,58 +31,58 @@ function newGuid() {
             );
 }
 
+//
+// Logging method
+//
 function log(message) {
     console.log("---------------------------");
     console.log(message);
     console.log("---------------------------");
 }
+function objDump(object) {
+    var output = "";
+    for (var property in object) {
+        output += ", " + property;
+    }
+    return output;
+}
+
+
+var activeConnections = {};
+var athleteLocations = {};
+
+function postMessage(message, ignoreSocketGuid) {
+    for (var key in activeConnections) {
+        if (ignoreSocketGuid == 'undefined' || key != ignoreSocketGuid) {
+            activeConnections[key].socket.write(message);
+        }
+    }
+}
+
+//
+// Utility webserver
+////
+var httpServer = http.createServer(function (req, res) {
+    res.writeHead(200, {'Content-Type': 'text/plain'});
+
+    var output =
+        "Connected Athletes:\n" +
+        "---------------------------\n";
+    for (var athleteId in athleteLocations) {
+        var loc = athleteLocations[athleteId];
+        output += athleteId + ": " + loc.latitude + ", " + loc.longitude + "\n";
+    }
+
+    res.end(output);
+    //res.end("Hello World\n" + 
+    //        "req: " + objDump(req) + "\n" +
+    //        "res: " + objDump(res) + "\n");
+}).listen(HTTP_PORT, HOST);
+console.log("HTTP Server ready on : " + HOST + ":" + HTTP_PORT);
 
 //
 // Location TCP socket thingy
 //
-
-var activeConnections = {};
-var connectedSockets = [];
-
-function socketQuery(socket, query) {
-    Location.find(query, function(err, locations) {
-        log("sending athlete socket(" + socket.athleteId + ") for query: '" + JSON.stringify(query) + "'" + 
-        "result: " + locations.length);
-
-        var update = {
-            request: "athletes_near",
-            athletes: []
-        };
-
-        for (var key in locations) {
-            var curLocation = locations[key];
-
-            // TODO: Filter on location!
-            // TODO: Filter on time!
-            // TODO: Filter duplicates!
-
-            update.athletes.push(curLocation.athleteId);
-        }
-
-        try {
-            socket.write(JSON.stringify(update));
-        } catch (e) { 
-        }
-    });
-}
-
-
-function notifyConnectedSockets() {
-    for (var i = 0; i < connectedSockets.length; i++) {
-        var curSocket = connectedSockets[i];
-        var query = {
-            $where : "this.athleteId != " + curSocket.athleteId
-        };
-
-        socketQuery(curSocket.socket, query);
-    }
-}
-
 var server = net.createServer();
 server.listen(PORT, HOST);
 server.on('connection', function(socket) {
@@ -131,30 +110,65 @@ server.on('connection', function(socket) {
 
         var message = JSON.parse(data);
         if (message.request == "hello") {
-            //connectedSockets.push({
-            //    "socket" : socket,
-            //    "athleteId" : message.athleteId
-            //});
-
+            // Set the athlete ID associated with the socket.
             socket.athleteId = message.athleteId;
 
-            // hack for now - just report number of connected clients.
-            var message = JSON.stringify({
-                request: "client_joined",
-                athleteId: message.athleteId
-            });
-            for (var key in activeConnections) {
-                activeConnections[key].socket.write(message);
-            }
+//          Handy for debugging:
+//            // Inform the new athlete about other connected athletes
+//            {
+//                var message = JSON.stringify({
+//                    request: "connected_clients",
+//                    clients: athleteLocations
+//                });
+//                socket.write(message);
+//            }
+//            // Inform other connected athletes that a new athlete has joined
+//            {
+//                var message = JSON.stringify({
+//                    request: "client_joined",
+//                    athleteId: message.athleteId
+//                });
+//                postMessage(message, socket.guid);
+//            }
         }
-        else if (message.request == "report") {
-            //new Location(message.report).save();
-            //notifyConnectedSockets();
+        else if (message.request == "location_report") {
+            // Store the variables in app-session for now. Would be nice to keep one record
+            // on disk - not sure if mongodb is great for that.
+
+            athleteLocations[message.athleteId] = {
+                latitude: message.latitude,
+                longitude: message.longitude
+            };
+            
+            // Inform other connected athletes of new athlete.
+            var message = JSON.stringify({
+                request: "close_athletes",
+                athleteId: message.athleteId,
+                latitude: message.latitude,
+                longitude: message.longitude
+            });
+            postMessage(message, socket.guid);
+
+            // Inform the current athlete about other connected athletes
+            // NOTE: This is a hack that just appends all connected athletes.
+            var closeAthletes = {};
+            for (var athleteId in athleteLocations) {
+                if (athleteId != socket.athleteId) {
+                    closeAthletes[athleteId] = athleteLocations[athleteId];
+                }
+            }
+            message = JSON.stringify({
+                request: "close_athletes",
+                clients: closeAthletes
+            });
+            socket.write(message);
+            
         }
     });
 
     socket.on('close', function(data) {
         delete activeConnections[socket.guid];
+        delete athleteLocations[socket.athleteId];
 
         log("Socket Closed [" + socket.guid + "] : (connections: " + server.connections + ")");
 
@@ -168,5 +182,5 @@ server.on('connection', function(socket) {
         }
     });
 });
-
 console.log("Server listening on " + HOST + ":" + PORT);
+
