@@ -8,8 +8,7 @@
 
 var net = require("net");
 
-var HOST = "192.168.2.1";  // HACK FOR NOW
-//var HOST = "127.0.0.1";
+var HOST = "192.168.1.126";
 var PORT = 5001;
 
 //
@@ -38,6 +37,21 @@ function jsonReplacer(key, value) {
     return value;
 }
 
+function newGuid() {
+    var S4 = function () {
+        return Math.floor(
+                Math.random() * 0x10000 /* 65536 */
+                ).toString(16);
+    };
+    return (
+            S4() + S4() + "-" +
+            S4() + "-" +
+            S4() + "-" +
+            S4() + "-" +
+            S4() + S4() + S4()
+            );
+}
+
 function log(message) {
     console.log("---------------------------");
     console.log(message);
@@ -48,6 +62,7 @@ function log(message) {
 // Location TCP socket thingy
 //
 
+var activeConnections = {};
 var connectedSockets = [];
 
 function socketQuery(socket, query) {
@@ -92,39 +107,65 @@ function notifyConnectedSockets() {
 var server = net.createServer();
 server.listen(PORT, HOST);
 server.on('connection', function(socket) {
-    console.log("CONNECTED: " + socket.remoteAddress +  ":" + socket.remotePort);
+    log("Connection Started: " + socket.remoteAddress +  ":" + socket.remotePort);
 
     socket.on('connect', function() {
-        log("Connection: (connections: " + server.connections + ")");
+        socket.guid = newGuid();
+        activeConnections[socket.guid] = {
+            socket: socket,
+            hasSaidHello: false,
+            athleteId: -1
+        };
+
+        for (var key in activeConnections) {
+            console.log("key: " + key);
+        }
+
+        socket.write(JSON.stringify({ request: "hello" }));
+
+        log("Socket Connected [" + socket.guid + "] : (connections: " + server.connections + ")");
     });
 
     socket.on('data', function(data) {
-        console.log("DATA: " + socket.remoteAddress + ": " + data + ", type: " + typeof(data));
+        log("Socket Data [" + socket.guid + "] : " + data);
 
         var message = JSON.parse(data);
         if (message.request == "hello") {
-            connectedSockets.push({
-                "socket" : socket,
-                "athleteId" : message.athleteId
+            //connectedSockets.push({
+            //    "socket" : socket,
+            //    "athleteId" : message.athleteId
+            //});
+
+            socket.athleteId = message.athleteId;
+
+            // hack for now - just report number of connected clients.
+            var message = JSON.stringify({
+                request: "client_joined",
+                athleteId: message.athleteId
             });
+            for (var key in activeConnections) {
+                activeConnections[key].socket.write(message);
+            }
         }
         else if (message.request == "report") {
-            new Location(message.report).save();
-            notifyConnectedSockets();
+            //new Location(message.report).save();
+            //notifyConnectedSockets();
         }
     });
 
     socket.on('close', function(data) {
-        console.log("CLOSED: " + data);
+        delete activeConnections[socket.guid];
 
-        // Prob not great?
-        //for (var key in connectedSockets) {
-        //    var curSocket = connectedSockets[key];
-        //    if (curSocket == socket) {
-        //        console.log(">>>>>> FOUND SOCKET");
-        //        // REMOVE ITEM!!
-        //    }
-        //}
+        log("Socket Closed [" + socket.guid + "] : (connections: " + server.connections + ")");
+
+        // Report:
+        var message = JSON.stringify({
+            request: "client_left",
+            athleteId: socket.athleteId
+        });
+        for (var key in activeConnections) {
+            activeConnections[key].socket.write(message);
+        }
     });
 });
 
