@@ -9,7 +9,7 @@
 var net = require("net");
 var http = require("http");
 
-var HOST = "127.0.0.1";
+//var HOST = "127.0.0.1";
 var PORT = process.env.PORT || 5001;
 var HTTP_PORT = process.env.PORT || 5002;  // Note: I don't think this will work on heroku...
 
@@ -85,7 +85,7 @@ function postMessage(message, ignoreSocketGuid) {
 // Location TCP socket thingy
 //
 var server = net.createServer();
-server.listen(PORT, HOST);
+server.listen(PORT);
 server.on('connection', function(socket) {
     log("Connection Started: " + socket.remoteAddress +  ":" + socket.remotePort);
 
@@ -182,5 +182,5 @@ server.on('connection', function(socket) {
         }
     });
 });
-console.log("Server listening on " + HOST + ":" + PORT);
+//console.log("Server listening on " + HOST + ":" + PORT);
 
