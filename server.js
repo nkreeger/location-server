@@ -10,8 +10,8 @@ var net = require("net");
 var http = require("http");
 
 var HOST = "127.0.0.1";
-var PORT = 5001;
-var HTTP_PORT = 5002;
+var PORT = process.env.PORT || 5001;
+var HTTP_PORT = process.env.PORT || 5002;  // Note: I don't think this will work on heroku...
 
 //
 // Method to generate and return a new GUID.
