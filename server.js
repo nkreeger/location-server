@@ -9,7 +9,7 @@
 var net = require("net");
 var http = require("http");
 
-var HOST = "192.168.1.126";
+var HOST = "127.0.0.1";
 var PORT = 5001;
 var HTTP_PORT = 5002;
 
@@ -130,8 +130,7 @@ server.on('connection', function(socket) {
 //                });
 //                postMessage(message, socket.guid);
 //            }
-        }
-        else if (message.request == "location_report") {
+        } else if (message.request == "location_report") {
             // Store the variables in app-session for now. Would be nice to keep one record
             // on disk - not sure if mongodb is great for that.
 
