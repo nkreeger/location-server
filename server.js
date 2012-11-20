@@ -62,23 +62,24 @@ function postMessage(message, ignoreSocketGuid) {
 //
 // Utility webserver
 ////
-var httpServer = http.createServer(function (req, res) {
-    res.writeHead(200, {'Content-Type': 'text/plain'});
-
-    var output =
-        "Connected Athletes:\n" +
-        "---------------------------\n";
-    for (var athleteId in athleteLocations) {
-        var loc = athleteLocations[athleteId];
-        output += athleteId + ": " + loc.latitude + ", " + loc.longitude + "\n";
-    }
-
-    res.end(output);
-    //res.end("Hello World\n" + 
-    //        "req: " + objDump(req) + "\n" +
-    //        "res: " + objDump(res) + "\n");
-}).listen(HTTP_PORT, HOST);
-console.log("HTTP Server ready on : " + HOST + ":" + HTTP_PORT);
+// XXX kreeger: this will not work on heroku. Need to use a DB for this to work properly.
+//var httpServer = http.createServer(function (req, res) {
+//    res.writeHead(200, {'Content-Type': 'text/plain'});
+//
+//    var output =
+//        "Connected Athletes:\n" +
+//        "---------------------------\n";
+//    for (var athleteId in athleteLocations) {
+//        var loc = athleteLocations[athleteId];
+//        output += athleteId + ": " + loc.latitude + ", " + loc.longitude + "\n";
+//    }
+//
+//    res.end(output);
+//    //res.end("Hello World\n" + 
+//    //        "req: " + objDump(req) + "\n" +
+//    //        "res: " + objDump(res) + "\n");
+//}).listen(HTTP_PORT, HOST);
+//console.log("HTTP Server ready on : " + HOST + ":" + HTTP_PORT);
 
 //
 // Location TCP socket thingy
