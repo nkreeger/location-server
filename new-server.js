@@ -25,7 +25,17 @@ io.sockets.on('connection', function(socket) {
     socket.emit('hello');
 
     socket.on('hello', function(data) {
-        console.log(">>>> GOT HELLO: ", data);
+        socket.athleteId = data.athleteId;
+
+        socket.broadcast.emit('athlete connected', {
+            athleteId: socket.athleteId
+        });
+    });
+
+    socket.on('disconnect', function() {
+        socket.broadcast.emit('athlete disconnected', {
+            athleteId: socket.athleteId
+        });
     });
 });
 

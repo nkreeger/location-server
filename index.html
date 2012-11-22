@@ -1,0 +1,24 @@
+<html>
+    <head>
+        <script src="/socket.io/socket.io.js"></script>
+    </head>
+
+    <body>
+        <script type="text/javascript">
+            var socket = io.connect('http://localhost:5001');
+            socket.on('connect', function() {
+                console.log(".... connected");
+            });
+            socket.on('athlete connected', function(data) {
+                console.log("athlete connected: ", data);
+            });
+            socket.on('athlete disconnected', function(data) {
+                console.log("athlete disconnected: ", data);                
+            });
+        </script>
+
+        <div class="status">
+            ... Connected!
+        </div>
+    </body>
+</html>
