@@ -18,6 +18,7 @@ var app = require('http').createServer(function(req, res) {
     });
 });
 app.listen(process.env.PORT || 5001);
+console.log("listening... : ", app);
 
 var io = require('socket.io').listen(app);
 
