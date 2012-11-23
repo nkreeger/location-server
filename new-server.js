@@ -6,8 +6,10 @@
 //------------------------------------------------------------------------------
 
 var fs = require('fs');
+var express = require('express');
 
-var app = require('http').createServer(function(req, res) {
+var app = express.createServer(express.logger());
+app.get('/', function(req, res) {
     fs.readFile(__dirname + '/index.html', function(err, data) {
         if (err) {
             res.writeHead(500);
@@ -17,11 +19,11 @@ var app = require('http').createServer(function(req, res) {
         res.end(data);
     });
 });
-app.listen(process.env.PORT || 5001);
-console.log("listening... : ", app);
+app.listen(process.env.PORT || 5001, function() {
+    console.log("listening... : ", app);
+});
 
 var io = require('socket.io').listen(app);
-
 io.sockets.on('connection', function(socket) {
     socket.emit('hello');
 
