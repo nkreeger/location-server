@@ -1,1 +1,1 @@
-server: node new-server.js
+web: node new-server.js
