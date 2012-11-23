@@ -8,7 +8,10 @@
 var fs = require('fs');
 var express = require('express');
 
-var app = express.createServer(express.logger());
+var app = express();
+var http = require('http');
+var server = http.createServer(app);
+
 app.get('/', function(req, res) {
     fs.readFile(__dirname + '/index.html', function(err, data) {
         if (err) {
@@ -19,11 +22,12 @@ app.get('/', function(req, res) {
         res.end(data);
     });
 });
-app.listen(process.env.PORT || 5001, function() {
-    console.log("listening... : ", app);
+
+server.listen(process.env.PORT || 5001, function() {
+    console.log("listening...");
 });
 
-var io = require('socket.io').listen(app);
+var io = require('socket.io').listen(server);
 io.sockets.on('connection', function(socket) {
     socket.emit('hello');
 
