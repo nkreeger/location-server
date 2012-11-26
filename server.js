@@ -29,6 +29,7 @@ server.listen(8080, function() {
     console.log("server listening:", server);
 });
 
+var io = require('socket.io').listen(server);
 io.sockets.on('connection', function(socket) {
     socket.emit('hello');
 
@@ -38,6 +39,10 @@ io.sockets.on('connection', function(socket) {
         socket.broadcast.emit('athlete connected', {
             athleteId: socket.athleteId
         });
+    });
+
+    socket.on('athlete location', function(data) {
+        socket.broadcast.emit('athlete location', data);
     });
 
     socket.on('disconnect', function() {
