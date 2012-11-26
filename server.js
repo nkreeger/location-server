@@ -23,14 +23,15 @@ app.get('/', function(req, res) {
     });
 });
 
-server.listen(process.env.PORT || 5001, function() {
-    console.log("listening...");
+server.listen(process.env.PORT || 5001, "127.0.0.1", function() {
+    console.log("server running...");
 });
 
 var io = require('socket.io').listen(server);
 io.configure(function () { 
-    io.set("transports", ["xhr-polling"]); 
-    io.set("polling duration", 10); 
+    // heroku support
+    //io.set("transports", ["xhr-polling"]); 
+    //io.set("polling duration", 10); 
 });
 
 io.sockets.on('connection', function(socket) {
