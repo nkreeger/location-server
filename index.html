@@ -15,6 +15,9 @@
             socket.on('athlete disconnected', function(data) {
                 console.log("athlete disconnected: ", data);                
             });
+            socket.on('athlete location', function(data) {
+                console.log('athlete location: ', data);
+            });
         </script>
 
         <div class="status">
