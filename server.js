@@ -23,15 +23,10 @@ app.get('/', function(req, res) {
     });
 });
 
-server.listen(process.env.PORT || 5001, "127.0.0.1", function() {
-    console.log("server running...");
-});
 
-var io = require('socket.io').listen(server);
-io.configure(function () { 
-    // heroku support
-    //io.set("transports", ["xhr-polling"]); 
-    //io.set("polling duration", 10); 
+// Jitsu configuration:
+server.listen(8080, function() {
+    console.log("server listening:", server);
 });
 
 io.sockets.on('connection', function(socket) {
