@@ -35,8 +35,48 @@
             $("body").ready(function() {
                 var socket = null;
 
-                $(".button.connection").click(function() {
+                function openSocket() {
                     socket = io.connect(window.location.hostname);
+                    socket.on('connect', function() {
+                        console.log(".... connected");
+
+                        $(".button.connection").removeAttr("disabled");
+                        $(".button.location").removeAttr("disabled");
+                        $(".button.connection").text("Close Connection");
+                    });
+                    socket.on('disconnect', function() {
+                        console.log("... disconnect");
+
+                        $(".button.connection").removeAttr("disabled");
+                        $(".button.location").attr("disabled", "true");
+                        $(".button.connection").text("Open Connection");
+                        socket = null;
+                    });
+                    socket.on('athlete connected', function(data) {
+                        console.log("athlete connected: ", data);
+                    });
+                    socket.on('athlete disconnected', function(data) {
+                        console.log("athlete disconnected: ", data);                
+                    });
+                    socket.on('athlete location', function(data) {
+                        console.log('athlete location: ', data);
+                    });
+                }
+
+                function closeSocket() {
+                    if (socket != null) {
+                        socket.disconnect();
+                    }
+                }
+
+                $(".button.connection").click(function() {
+                    $(this).attr("disabled", "true");
+                    if ($(this).text() == "Open Connection") {
+                        openSocket();
+                    }
+                    else {
+                        closeSocket();
+                    }
                 });
 
                 $(".button.location").click(function() {
