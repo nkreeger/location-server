@@ -23,6 +23,17 @@ app.get('/', function(req, res) {
     });
 });
 
+app.get("/jquery", function(req, res) {
+    fs.readFile(__dirname + '/jquery-1.6.2.min.js', function(err, data) {
+        if (err) {
+            res.writeHead(404);
+            return res.end("Could not find jquery!");
+        }
+        res.writeHead(200);
+        res.end(data);
+    });
+});
+
 
 // Jitsu configuration:
 server.listen(8080, function() {

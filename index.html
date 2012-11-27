@@ -1,27 +1,75 @@
 <html>
     <head>
         <script src="/socket.io/socket.io.js"></script>
+        <script src="/jquery"></script>
+        <style type="text/css">
+            body {
+                background: #ccc;
+            }
+
+            .buttons {
+                float: left;
+                width: 200px;
+            }
+            .button {
+                display: block;
+                width: 100%;
+                padding: 10px;
+            }
+
+            .console {
+                background-color: black;
+                color: #ccc;
+                width: 800px;
+                min-height: 500px;
+                margin-left: 210px;
+            }
+
+            .output {
+                padding: 15px;
+                font-family: monospace;
+            }
+        </style>
+
+        <script type="text/javascript">
+            $("body").ready(function() {
+                var socket = null;
+
+                $(".button.connection").click(function() {
+                    socket = io.connect(window.location.hostname);
+                });
+
+                $(".button.location").click(function() {
+                });
+            });
+        </script>
     </head>
 
     <body>
         <script type="text/javascript">
-            var socket = io.connect(window.location.hostname);
-            socket.on('connect', function() {
-                console.log(".... connected");
-            });
-            socket.on('athlete connected', function(data) {
-                console.log("athlete connected: ", data);
-            });
-            socket.on('athlete disconnected', function(data) {
-                console.log("athlete disconnected: ", data);                
-            });
-            socket.on('athlete location', function(data) {
-                console.log('athlete location: ', data);
-            });
+//            var socket = io.connect(window.location.hostname);
+//            socket.on('connect', function() {
+//                console.log(".... connected");
+//            });
+//            socket.on('athlete connected', function(data) {
+//                console.log("athlete connected: ", data);
+//            });
+//            socket.on('athlete disconnected', function(data) {
+//                console.log("athlete disconnected: ", data);                
+//            });
+//            socket.on('athlete location', function(data) {
+//                console.log('athlete location: ', data);
+//            });
         </script>
 
-        <div class="status">
-            ... Connected!
+        <div class="buttons">
+            <button class="button connection">Open Connection</button>
+            <button class="button location" disabled="true">Send Location</button>
         </div>
+
+        <div class="console">
+            <div class="output"></div>
+        </div>
+
     </body>
 </html>
